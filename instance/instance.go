@@ -18,7 +18,7 @@ type Instance struct {
 }
 
 // New - constructor function for Disk
-func New(conf config.Configuration) Instance {
+func New(conf *config.Configuration) Instance {
 	i := Instance{conf.Token, conf.Folderid}
 	return i
 }

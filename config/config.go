@@ -11,8 +11,11 @@ import (
 // Configuration - struct to load config
 // from a json file
 type Configuration struct {
-	Token    string
-	Folderid string
+	Token             string
+	Folderid          string
+	KeyID             string
+	ServiceAccountID  string
+	PrivateRSAKeyFile string
 }
 
 // ReadConfiguration - funtion to
