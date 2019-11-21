@@ -59,7 +59,7 @@ func loadPrivateKey(conf *config.Configuration) *rsa.PrivateKey {
 // GetIAMToken - to get IAM token
 func GetIAMToken(conf *config.Configuration) string {
 	jot := GetSignedToken(conf)
-	fmt.Println(jot)
+	//fmt.Println(jot)
 	resp, err := http.Post(
 		"https://iam.api.cloud.yandex.net/iam/v1/tokens",
 		"application/json",

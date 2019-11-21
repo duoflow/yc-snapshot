@@ -1,4 +1,4 @@
-package instance
+package snapshot
 
 import (
 	"context"
@@ -11,26 +11,30 @@ import (
 	"github.com/duoflow/yc-snapshot/config"
 )
 
-// Instance - struct for yc disk operations
-type Instance struct {
-	Token    string
-	Folderid string
+// Snapshot - struct for yc snapshot operations
+type Snapshot struct {
+	Token       string
+	Folderid    string
+	Diskid      string
+	Name        string
+	Description string
+	Labels      string
 }
 
 // New - constructor function for Disk
-func New(conf *config.Configuration) Instance {
-	i := Instance{conf.Token, conf.Folderid}
+func New(conf *config.Configuration) Snapshot {
+	i := Snapshot{conf.Token, conf.Folderid, conf.DiskToBackup, conf.DiskToBackup + "-" + time.Now().Format("2019-11-22-01-00-51"), "", ""}
 	return i
 }
 
 // List - function for listing of all disks
-func (i Instance) List(ctx context.Context) {
-	log.Println("Function -Instance -> List- starts")
+func (i Snapshot) List(ctx context.Context) {
+	log.Println("Function -Snapshot -> List- starts")
 	ctx, cancel := context.WithTimeout(ctx, 1000*time.Millisecond)
 	defer cancel()
 	// ---------
 	client := &http.Client{}
-	req, _ := http.NewRequest("GET", "https://compute.api.cloud.yandex.net/compute/v1/instances", nil)
+	req, _ := http.NewRequest("GET", "https://compute.api.cloud.yandex.net/compute/v1/snapshots", nil)
 	// add Auth Header
 	req.Header.Add("Authorization", "Bearer "+i.Token)
 	// add query params
@@ -53,13 +57,13 @@ func (i Instance) List(ctx context.Context) {
 }
 
 // Get - function for listing of all disks
-func (i Instance) Get(ctx context.Context, instanceid string) {
+func (i Snapshot) Get(ctx context.Context, snapshotid string) {
 	log.Println("Function -Instance -> Get- starts")
 	ctx, cancel := context.WithTimeout(ctx, 1000*time.Millisecond)
 	defer cancel()
 	// ---------
 	client := &http.Client{}
-	req, _ := http.NewRequest("GET", "https://compute.api.cloud.yandex.net/compute/v1/instances/"+instanceid, nil)
+	req, _ := http.NewRequest("GET", "https://compute.api.cloud.yandex.net/compute/v1/snapshots/"+snapshotid, nil)
 	// add Auth Header
 	req.Header.Add("Authorization", "Bearer "+i.Token)
 	// make request
@@ -77,41 +81,23 @@ func (i Instance) Get(ctx context.Context, instanceid string) {
 	fmt.Println(string(respBody))
 }
 
-// Stop - function for listing of all disks
-func (i Instance) Stop(ctx context.Context, instanceid string) {
-	log.Println("Function -Instance -> Stop- starts")
+// Create - function for create snapshot
+func (i Snapshot) Create(ctx context.Context) {
+	log.Println("Function -Snapshot -> Create- starts")
 	ctx, cancel := context.WithTimeout(ctx, 1000*time.Millisecond)
 	defer cancel()
 	// ---------
 	client := &http.Client{}
-	req, _ := http.NewRequest("POST", "https://compute.api.cloud.yandex.net/compute/v1/instances/"+instanceid+":stop", nil)
+	req, _ := http.NewRequest("POST", "https://compute.api.cloud.yandex.net/compute/v1/snapshots", nil)
 	// add Auth Header
 	req.Header.Add("Authorization", "Bearer "+i.Token)
-	// make request
-	resp, err := client.Do(req)
-	// ----------
-	if err != nil {
-		fmt.Println("Errored when sending request to the server")
-		return
-	}
-	// ---------
-	defer resp.Body.Close()
-	respBody, _ := ioutil.ReadAll(resp.Body)
-
-	fmt.Println(resp.Status)
-	fmt.Println(string(respBody))
-}
-
-// Start - function for listing of all disks
-func (i Instance) Start(ctx context.Context, instanceid string) {
-	log.Println("Function -Instance -> Start- starts")
-	ctx, cancel := context.WithTimeout(ctx, 1000*time.Millisecond)
-	defer cancel()
-	// ---------
-	client := &http.Client{}
-	req, _ := http.NewRequest("POST", "https://compute.api.cloud.yandex.net/compute/v1/instances/"+instanceid+":start", nil)
-	// add Auth Header
-	req.Header.Add("Authorization", "Bearer "+i.Token)
+	// add query params
+	q := req.URL.Query()
+	q.Add("folderId", i.Folderid)
+	q.Add("diskId", i.Diskid)
+	q.Add("name", i.Name)
+	q.Add("description", i.Description)
+	req.URL.RawQuery = q.Encode()
 	// make request
 	resp, err := client.Do(req)
 	// ----------

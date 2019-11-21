@@ -16,6 +16,7 @@ type Configuration struct {
 	KeyID             string
 	ServiceAccountID  string
 	PrivateRSAKeyFile string
+	DiskToBackup      string
 }
 
 // ReadConfiguration - funtion to
