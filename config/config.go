@@ -3,13 +3,10 @@ package config
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 	"time"
-
-	gonfig "github.com/tkanos/gonfig"
 )
 
 // VirtualMachine - struct for VM description
@@ -17,11 +14,6 @@ type VirtualMachine struct {
 	VMname  string
 	VMid    string
 	VMhddid string
-}
-
-// VirtualMachines - struct for VMs array
-type VirtualMachines struct {
-	VirtualMachines []VirtualMachine
 }
 
 // Configuration - struct to load config
@@ -34,23 +26,8 @@ type Configuration struct {
 	PrivateRSAKeyFile string
 }
 
-// ReadConfiguration - funtion to
-// read service config from json file
-func ReadConfiguration(ctx context.Context) (Configuration, error) {
-	ctx, cancel := context.WithTimeout(ctx, 1000*time.Millisecond)
-	defer cancel()
-	// --------
-	configuration := Configuration{}
-	err := gonfig.GetConf("./ycsd.conf.json", &configuration)
-	if err != nil {
-		fmt.Println("Reading of configuration file failed with error: ", err)
-		return configuration, err
-	}
-	return configuration, err
-}
-
-// ReadConfigurationV2 - function to read config from yaml file
-func ReadConfigurationV2(ctx context.Context) (Configuration, error) {
+// ReadConfiguration - function to read config from yaml file
+func ReadConfiguration(ctx context.Context) (Configuration, []VirtualMachine, error) {
 	var configuration Configuration
 	vms := make([]VirtualMachine, 0)
 	//
@@ -78,11 +55,9 @@ func ReadConfigurationV2(ctx context.Context) (Configuration, error) {
 	json.Unmarshal(configValue, &configuration)
 	json.Unmarshal(vmsValue, &vms)
 	// defer the closing of our jsonFile so that we can parse it later on
-	fmt.Printf("%#v", configuration)
-	fmt.Printf("\r\n\r\n\r\nVMs:\r\n")
-	fmt.Printf("%#v", vms)
+	//fmt.Printf("%#v", configuration)
+	//fmt.Printf("\r\n\r\n\r\nVMs:\r\n")
+	//fmt.Printf("%#v", vms)
 	// --------
-	os.Exit(3)
-	return configuration, nil
-
+	return configuration, vms, nil
 }

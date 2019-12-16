@@ -80,5 +80,6 @@ func GetIAMToken(conf *config.Configuration) string {
 	if err != nil {
 		panic(err)
 	}
+	conf.Token = data.IAMToken
 	return data.IAMToken
 }
