@@ -12,14 +12,13 @@ import (
 
 func main() {
 	ctx := context.Background()
-	conf, _ := config.ReadConfiguration(ctx)
+	conf, _ := config.ReadConfigurationV2(ctx)
+	//fmt.Println(conf)
 	// get new IAM token
-	conf.Token = token.GetIAMToken(&conf)
-	//fmt.Println("New IAMToken: " + conf.Token)
+	token.GetIAMToken(&conf)
+	//---
 	vm01 := instance.New(&conf)
-	vm01.Get(ctx, "epdnvonl4vd6ik8ngood")
-	vm01.Stop(ctx, "epdnvonl4vd6ik8ngood")
-	//
+	vm01.Get(ctx, "ef3cbgorepe1bquo0efr")
 	snap01 := snapshot.New(&conf)
 	log.Println(snap01.Name)
 	snap01.List(ctx)

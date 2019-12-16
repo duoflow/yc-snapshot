@@ -21,13 +21,13 @@ type Snapshot struct {
 	Labels      string
 }
 
-// New - constructor function for Disk
+// New - constructor function for Snapshot
 func New(conf *config.Configuration) Snapshot {
-	i := Snapshot{conf.Token, conf.Folderid, conf.DiskToBackup, conf.DiskToBackup + "-" + time.Now().Format("2019-11-22-01-00-51"), "", ""}
+	i := Snapshot{conf.Token, conf.Folderid, "", "-" + time.Now().Format("2019-11-22-01-00-51"), "", ""}
 	return i
 }
 
-// List - function for listing of all disks
+// List - function for listing of all Snapshots
 func (i Snapshot) List(ctx context.Context) {
 	log.Println("Function -Snapshot -> List- starts")
 	ctx, cancel := context.WithTimeout(ctx, 1000*time.Millisecond)

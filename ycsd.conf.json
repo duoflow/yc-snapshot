@@ -3,6 +3,5 @@
     "Folderid": "b1gtjnk0djqsd5lbeqe1",
     "KeyID": "ajebpdmm4erbr1a12pkf",
     "ServiceAccountID": "aje7isfpgug1i4tcu1ne",
-    "PrivateRSAKeyFile": "privatersakey.pem",
-    "DiskToBackup": "epdsh9cmbecta6mnfuja"
+    "PrivateRSAKeyFile": "privatersakey.pem"
 }
