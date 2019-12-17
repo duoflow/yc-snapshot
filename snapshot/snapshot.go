@@ -13,33 +13,30 @@ import (
 
 // Snapshot - struct for yc snapshot operations
 type Snapshot struct {
-	Token       string
-	Folderid    string
-	Diskid      string
-	Name        string
-	Description string
-	Labels      string
+	Token    string
+	Folderid string
+	vms      *[]config.VirtualMachine
 }
 
 // New - constructor function for Snapshot
-func New(conf *config.Configuration) Snapshot {
-	i := Snapshot{conf.Token, conf.Folderid, "", "-" + time.Now().Format("2019-11-22-01-00-51"), "", ""}
-	return i
+func New(conf *config.Configuration, vms *[]config.VirtualMachine) Snapshot {
+	snap := Snapshot{conf.Token, conf.Folderid, vms}
+	return snap
 }
 
 // List - function for listing of all Snapshots
-func (i Snapshot) List(ctx context.Context) {
-	log.Println("Function -Snapshot -> List- starts")
+func (snap Snapshot) List(ctx context.Context) {
+	log.Println("Snapshot List() starts")
 	ctx, cancel := context.WithTimeout(ctx, 1000*time.Millisecond)
 	defer cancel()
 	// ---------
 	client := &http.Client{}
 	req, _ := http.NewRequest("GET", "https://compute.api.cloud.yandex.net/compute/v1/snapshots", nil)
 	// add Auth Header
-	req.Header.Add("Authorization", "Bearer "+i.Token)
+	req.Header.Add("Authorization", "Bearer "+snap.Token)
 	// add query params
 	q := req.URL.Query()
-	q.Add("folderId", i.Folderid)
+	q.Add("folderId", snap.Folderid)
 	req.URL.RawQuery = q.Encode()
 	// make request
 	resp, err := client.Do(req)
@@ -51,13 +48,13 @@ func (i Snapshot) List(ctx context.Context) {
 	// ---------
 	defer resp.Body.Close()
 	respBody, _ := ioutil.ReadAll(resp.Body)
-
-	fmt.Println(resp.Status)
-	fmt.Println(string(respBody))
+	//
+	log.Printf("Snapshot List() status: %s", resp.Status)
+	log.Println(string(respBody))
 }
 
-// Get - function for listing of all disks
-func (i Snapshot) Get(ctx context.Context, snapshotid string) {
+// Get - function for listing of partucular snapshot
+func (snap Snapshot) Get(ctx context.Context, snapshotid string) {
 	log.Println("Function -Instance -> Get- starts")
 	ctx, cancel := context.WithTimeout(ctx, 1000*time.Millisecond)
 	defer cancel()
@@ -65,7 +62,7 @@ func (i Snapshot) Get(ctx context.Context, snapshotid string) {
 	client := &http.Client{}
 	req, _ := http.NewRequest("GET", "https://compute.api.cloud.yandex.net/compute/v1/snapshots/"+snapshotid, nil)
 	// add Auth Header
-	req.Header.Add("Authorization", "Bearer "+i.Token)
+	req.Header.Add("Authorization", "Bearer "+snap.Token)
 	// make request
 	resp, err := client.Do(req)
 	// ----------
@@ -82,7 +79,7 @@ func (i Snapshot) Get(ctx context.Context, snapshotid string) {
 }
 
 // Create - function for create snapshot
-func (i Snapshot) Create(ctx context.Context) {
+func (snap Snapshot) Create(ctx context.Context, Diskid string, SnapshotName string, SnapshotDesc string) {
 	log.Println("Function -Snapshot -> Create- starts")
 	ctx, cancel := context.WithTimeout(ctx, 1000*time.Millisecond)
 	defer cancel()
@@ -90,13 +87,13 @@ func (i Snapshot) Create(ctx context.Context) {
 	client := &http.Client{}
 	req, _ := http.NewRequest("POST", "https://compute.api.cloud.yandex.net/compute/v1/snapshots", nil)
 	// add Auth Header
-	req.Header.Add("Authorization", "Bearer "+i.Token)
+	req.Header.Add("Authorization", "Bearer "+snap.Token)
 	// add query params
 	q := req.URL.Query()
-	q.Add("folderId", i.Folderid)
-	q.Add("diskId", i.Diskid)
-	q.Add("name", i.Name)
-	q.Add("description", i.Description)
+	q.Add("folderId", snap.Folderid)
+	q.Add("diskId", Diskid)
+	q.Add("name", SnapshotName)
+	q.Add("description", SnapshotDesc)
 	req.URL.RawQuery = q.Encode()
 	// make request
 	resp, err := client.Do(req)
@@ -108,7 +105,16 @@ func (i Snapshot) Create(ctx context.Context) {
 	// ---------
 	defer resp.Body.Close()
 	respBody, _ := ioutil.ReadAll(resp.Body)
+	// log events
+	log.Println(resp.Status)
+	log.Println(string(respBody))
+}
 
-	fmt.Println(resp.Status)
-	fmt.Println(string(respBody))
+// RunSnapshot - function for create snapshot
+func (snap Snapshot) RunSnapshot(ctx context.Context) {
+	log.Println("RunSnapshot() starts")
+	ctx, cancel := context.WithTimeout(ctx, 1000*time.Millisecond)
+	defer cancel()
+	// ---------
+	log.Println("RunSnapshot() action")
 }
