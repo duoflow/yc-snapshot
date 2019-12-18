@@ -20,11 +20,11 @@ func main() {
 	// get new IAM token
 	token.GetIAMToken(&conf)
 	// create
-	snap := snapshot.New(&conf, &vms)
+	snap := snapshot.New(&conf, vms)
 	//
 	c := cron.New()
 	// "35 23 */2 * *"
-	c.AddFunc("*/1 * * * *", func() { snap.List(ctx) })
+	c.AddFunc("*/1 * * * *", func() { snap.MakeSnapshot(ctx) })
 	c.Start()
 	// start listening for terminate signals
 	channel := make(chan os.Signal)

@@ -7,20 +7,23 @@ import (
 	"log"
 	"net/http"
 	"time"
+	"regexp"
 
 	"github.com/duoflow/yc-snapshot/config"
+	"github.com/duoflow/yc-snapshot/instance"
 )
 
 // Snapshot - struct for yc snapshot operations
 type Snapshot struct {
 	Token    string
 	Folderid string
-	vms      *[]config.VirtualMachine
+	vms      []config.VirtualMachine
+	instance instance.Instance
 }
 
 // New - constructor function for Snapshot
-func New(conf *config.Configuration, vms *[]config.VirtualMachine) Snapshot {
-	snap := Snapshot{conf.Token, conf.Folderid, vms}
+func New(conf *config.Configuration, vms []config.VirtualMachine) Snapshot {
+	snap := Snapshot{conf.Token, conf.Folderid, vms, instance.New(conf)}
 	return snap
 }
 
@@ -110,11 +113,19 @@ func (snap Snapshot) Create(ctx context.Context, Diskid string, SnapshotName str
 	log.Println(string(respBody))
 }
 
-// RunSnapshot - function for create snapshot
-func (snap Snapshot) RunSnapshot(ctx context.Context) {
-	log.Println("RunSnapshot() starts")
+// MakeSnapshot - function for create snapshot
+func (snap Snapshot) MakeSnapshot(ctx context.Context) {
+	log.Println("MakeSnapshot() starts")
 	ctx, cancel := context.WithTimeout(ctx, 1000*time.Millisecond)
 	defer cancel()
 	// ---------
-	log.Println("RunSnapshot() action")
+	for _, vm := range snap.vms {
+		go func(vmi config.VirtualMachine) {
+			log.Printf("MakeSnapshot(): Discovered VMs: VMid=%s", vmi.VMid)
+			snap.instance.Get(ctx, vmi.VMid)
+
+		}(vm)
+	}
+	// ---------
+	log.Println("MakeSnapshot() action")
 }
