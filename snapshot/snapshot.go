@@ -82,7 +82,7 @@ func (snap Snapshot) Get(ctx context.Context, snapshotid string) {
 
 // Create - function for create snapshot
 func (snap Snapshot) Create(ctx context.Context, Diskid string, SnapshotName string, SnapshotDesc string) {
-	loggers.Info.Printf("Function -Snapshot -> Create- starts")
+	loggers.Info.Printf("Snapshot Create() starts")
 	ctx, cancel := context.WithTimeout(ctx, 1000*time.Millisecond)
 	defer cancel()
 	// ---------
@@ -94,22 +94,22 @@ func (snap Snapshot) Create(ctx context.Context, Diskid string, SnapshotName str
 	q := req.URL.Query()
 	q.Add("folderId", snap.Folderid)
 	q.Add("diskId", Diskid)
-	q.Add("name", SnapshotName)
+	//q.Add("name", SnapshotName)
 	q.Add("description", SnapshotDesc)
 	req.URL.RawQuery = q.Encode()
 	// make request
 	resp, err := client.Do(req)
 	// ----------
 	if err != nil {
-		fmt.Println("Errored when sending request to the server")
+		loggers.Error.Printf("Snapshot Create() Errored when sending request to the server")
 		return
 	}
 	// ---------
 	defer resp.Body.Close()
 	respBody, _ := ioutil.ReadAll(resp.Body)
 	// log events
-	loggers.Info.Printf(resp.Status)
-	loggers.Info.Printf(string(respBody))
+	loggers.Info.Printf("Snapshot Create() REST API Request status = %s", resp.Status)
+	loggers.Trace.Printf("Snapshot Create() EST API Request body = \n%s", string(respBody))
 }
 
 // MakeSnapshot - function for create snapshot
@@ -127,6 +127,14 @@ func (snap Snapshot) MakeSnapshot(ctx context.Context) {
 			if vmstatus == "RUNNING" {
 				vmstopstate := snap.StopVM(ctx, vmi.VMid)
 				loggers.Info.Printf("MakeSnapshot(): VM stop operation state = %d", vmstopstate)
+				//------
+				if vmstopstate == 1 {
+					loggers.Info.Printf("MakeSnapshot(): Start creating snapshot for VM=%s, Disk=%s", vmi.VMid, vmi.VMhddid)
+					snapname := "snapshot-date"
+					snapdesc := "snap-description"
+					snap.Create(ctx, vmi.VMhddid, snapname, snapdesc)
+				}
+
 			} else {
 				loggers.Error.Printf("MakeSnapshot(): VM with VMid=%s is not in RUNNING state", vmi.VMid)
 				loggers.Error.Printf("MakeSnapshot(): SEND EMAIL NOTIFICATION HERE")
