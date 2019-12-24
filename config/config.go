@@ -4,9 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"io/ioutil"
-	"log"
 	"os"
 	"time"
+
+	"github.com/duoflow/yc-snapshot/loggers"
 )
 
 // VirtualMachine - struct for VM description
@@ -32,7 +33,7 @@ func ReadConfig(ctx context.Context) (Configuration, []VirtualMachine, error) {
 	var configuration Configuration
 	vms := make([]VirtualMachine, 0)
 	//
-	log.Println("ReadConfig() starts")
+	loggers.Info.Printf("ReadConfig() starts")
 	ctx, cancel := context.WithTimeout(ctx, 1000*time.Millisecond)
 	defer cancel()
 	// --------
@@ -44,11 +45,11 @@ func ReadConfig(ctx context.Context) (Configuration, []VirtualMachine, error) {
 	defer vmsFile.Close()
 	// if we os.Open returns an error then handle it
 	if err1 != nil || err2 != nil {
-		log.Println(err1)
-		log.Println(err2)
+		loggers.Info.Println(err1)
+		loggers.Info.Println(err2)
 		os.Exit(1)
 	}
-	log.Println("ReadConfig() Successfully opened сonfig files")
+	loggers.Info.Printf("ReadConfig() Successfully opened сonfig files")
 	// read our opened xmlFile as a byte array.
 	configValue, _ := ioutil.ReadAll(configFile)
 	vmsValue, _ := ioutil.ReadAll(vmsFile)

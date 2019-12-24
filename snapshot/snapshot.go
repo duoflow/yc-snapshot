@@ -4,13 +4,12 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"time"
-	"regexp"
 
 	"github.com/duoflow/yc-snapshot/config"
 	"github.com/duoflow/yc-snapshot/instance"
+	"github.com/duoflow/yc-snapshot/loggers"
 )
 
 // Snapshot - struct for yc snapshot operations
@@ -29,7 +28,7 @@ func New(conf *config.Configuration, vms []config.VirtualMachine) Snapshot {
 
 // List - function for listing of all Snapshots
 func (snap Snapshot) List(ctx context.Context) {
-	log.Println("Snapshot List() starts")
+	loggers.Info.Printf("Snapshot List() starts")
 	ctx, cancel := context.WithTimeout(ctx, 1000*time.Millisecond)
 	defer cancel()
 	// ---------
@@ -52,13 +51,13 @@ func (snap Snapshot) List(ctx context.Context) {
 	defer resp.Body.Close()
 	respBody, _ := ioutil.ReadAll(resp.Body)
 	//
-	log.Printf("Snapshot List() status: %s", resp.Status)
-	log.Println(string(respBody))
+	loggers.Info.Printf("Snapshot List() status: %s", resp.Status)
+	loggers.Info.Printf(string(respBody))
 }
 
 // Get - function for listing of partucular snapshot
 func (snap Snapshot) Get(ctx context.Context, snapshotid string) {
-	log.Println("Function -Instance -> Get- starts")
+	loggers.Info.Printf("Function -Instance -> Get- starts")
 	ctx, cancel := context.WithTimeout(ctx, 1000*time.Millisecond)
 	defer cancel()
 	// ---------
@@ -83,7 +82,7 @@ func (snap Snapshot) Get(ctx context.Context, snapshotid string) {
 
 // Create - function for create snapshot
 func (snap Snapshot) Create(ctx context.Context, Diskid string, SnapshotName string, SnapshotDesc string) {
-	log.Println("Function -Snapshot -> Create- starts")
+	loggers.Info.Printf("Function -Snapshot -> Create- starts")
 	ctx, cancel := context.WithTimeout(ctx, 1000*time.Millisecond)
 	defer cancel()
 	// ---------
@@ -109,23 +108,54 @@ func (snap Snapshot) Create(ctx context.Context, Diskid string, SnapshotName str
 	defer resp.Body.Close()
 	respBody, _ := ioutil.ReadAll(resp.Body)
 	// log events
-	log.Println(resp.Status)
-	log.Println(string(respBody))
+	loggers.Info.Printf(resp.Status)
+	loggers.Info.Printf(string(respBody))
 }
 
 // MakeSnapshot - function for create snapshot
 func (snap Snapshot) MakeSnapshot(ctx context.Context) {
-	log.Println("MakeSnapshot() starts")
+	loggers.Info.Printf("MakeSnapshot() starts")
 	ctx, cancel := context.WithTimeout(ctx, 1000*time.Millisecond)
 	defer cancel()
 	// ---------
 	for _, vm := range snap.vms {
 		go func(vmi config.VirtualMachine) {
-			log.Printf("MakeSnapshot(): Discovered VMs: VMid=%s", vmi.VMid)
-			snap.instance.Get(ctx, vmi.VMid)
+			loggers.Info.Printf("MakeSnapshot(): Discovered VMs: VMid=%s", vmi.VMid)
+			// get vm status
+			vmstatus := snap.instance.Get(ctx, vmi.VMid)
+			// if VM status = RUNNING shutdown the VM
+			if vmstatus == "RUNNING" {
+				vmstopstate := snap.StopVM(ctx, vmi.VMid)
+				loggers.Info.Printf("MakeSnapshot(): VM stop operation state = %d", vmstopstate)
+			} else {
+				loggers.Error.Printf("MakeSnapshot(): VM with VMid=%s is not in RUNNING state", vmi.VMid)
+				loggers.Error.Printf("MakeSnapshot(): SEND EMAIL NOTIFICATION HERE")
+			}
 
 		}(vm)
 	}
 	// ---------
-	log.Println("MakeSnapshot() action")
+	loggers.Info.Printf("MakeSnapshot() action")
+}
+
+// StopVM - function for create snapshot
+func (snap Snapshot) StopVM(ctx context.Context, vmid string) int {
+	loggers.Info.Printf("Snapshot StopVM() starts")
+	ctx, cancel := context.WithTimeout(ctx, 1000*time.Millisecond)
+	defer cancel()
+	// Call instance stop REST function
+	snap.instance.Stop(ctx, vmid)
+	// Check status of VM after sleep timer
+	loggers.Info.Printf("Snapshot StopVM() Start sleep timer")
+	time.Sleep(120 * time.Second)
+	loggers.Info.Printf("Snapshot StopVM() Check VM running status")
+	vmstatus := snap.instance.Get(ctx, vmid)
+	loggers.Info.Printf("Snapshot StopVM() VM status after shutdown = %s", vmstatus)
+	if vmstatus == "STOPPED" {
+		loggers.Info.Printf("Snapshot StopVM() VM with VMid=%s has stopped in sleep timer", vmid)
+		return 1
+	}
+	// ----
+	loggers.Error.Printf("Snapshot StopVM() VM with VMid=%s hasn't stopped in sleep timer", vmid)
+	return 0
 }

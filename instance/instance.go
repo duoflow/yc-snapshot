@@ -2,14 +2,13 @@ package instance
 
 import (
 	"context"
-	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"regexp"
 	"time"
 
 	"github.com/duoflow/yc-snapshot/config"
+	"github.com/duoflow/yc-snapshot/loggers"
 )
 
 // Instance - struct for yc disk operations
@@ -26,7 +25,7 @@ func New(conf *config.Configuration) Instance {
 
 // List - function for listing of all disks
 func (i Instance) List(ctx context.Context) {
-	log.Println("Function -Instance -> List- starts")
+	loggers.Info.Printf("Function -Instance -> List- starts")
 	ctx, cancel := context.WithTimeout(ctx, 1000*time.Millisecond)
 	defer cancel()
 	// ---------
@@ -42,20 +41,20 @@ func (i Instance) List(ctx context.Context) {
 	resp, err := client.Do(req)
 	// ----------
 	if err != nil {
-		fmt.Println("Errored when sending request to the server")
+		loggers.Info.Printf("Errored when sending request to the server")
 		return
 	}
 	// ---------
 	defer resp.Body.Close()
 	respBody, _ := ioutil.ReadAll(resp.Body)
 
-	fmt.Println(resp.Status)
-	fmt.Println(string(respBody))
+	loggers.Info.Printf(resp.Status)
+	loggers.Info.Printf(string(respBody))
 }
 
-// Get - function for listing of all disks
+// Get - function for listing status of vm
 func (i Instance) Get(ctx context.Context, instanceid string) string {
-	log.Println("Instance Get() starts")
+	loggers.Info.Printf("Instance Get() starts")
 	ctx, cancel := context.WithTimeout(ctx, 1000*time.Millisecond)
 	defer cancel()
 	// ---------
@@ -67,17 +66,17 @@ func (i Instance) Get(ctx context.Context, instanceid string) string {
 	resp, err := client.Do(req)
 	// ----------
 	if err != nil {
-		fmt.Println("Errored when sending request to the server")
+		loggers.Info.Printf("Instance Get() Errored when sending request to the server")
 	}
 	// ---------
 	defer resp.Body.Close()
 	respBody, _ := ioutil.ReadAll(resp.Body)
-	log.Printf("Instance Get() result %s\n", resp.Status)
-	//fmt.Println(string(respBody))
+	loggers.Info.Printf("Instance Get() Request result = %s\n", resp.Status)
+	//loggers.Info.Printf(string(respBody))
 	statusRegexp := regexp.MustCompile(`(?mi)("status"..)"(.*)",`)
 	matchResult := statusRegexp.FindStringSubmatch(string(respBody))
 	if matchResult != nil {
-		log.Printf("VM status = %s\n", matchResult[2])
+		loggers.Info.Printf("Instance Get() VM status = %s\n", matchResult[2])
 		return matchResult[2]
 	}
 	return "nil"
@@ -85,7 +84,7 @@ func (i Instance) Get(ctx context.Context, instanceid string) string {
 
 // Stop - function for listing of all disks
 func (i Instance) Stop(ctx context.Context, instanceid string) {
-	log.Println("Function -Instance -> Stop- starts")
+	loggers.Info.Printf("Instance Stop() starts")
 	ctx, cancel := context.WithTimeout(ctx, 1000*time.Millisecond)
 	defer cancel()
 	// ---------
@@ -97,20 +96,20 @@ func (i Instance) Stop(ctx context.Context, instanceid string) {
 	resp, err := client.Do(req)
 	// ----------
 	if err != nil {
-		fmt.Println("Errored when sending request to the server")
+		loggers.Info.Printf("Instance Stop() Errored when sending request to the server")
 		return
 	}
 	// ---------
 	defer resp.Body.Close()
-	respBody, _ := ioutil.ReadAll(resp.Body)
+	//respBody, _ := ioutil.ReadAll(resp.Body)
 
-	fmt.Println(resp.Status)
-	fmt.Println(string(respBody))
+	loggers.Info.Printf("Instance Stop() REST request result = %s\n", resp.Status)
+	//loggers.Info.Printf(string(respBody))
 }
 
 // Start - function for listing of all disks
 func (i Instance) Start(ctx context.Context, instanceid string) {
-	log.Println("Function -Instance -> Start- starts")
+	loggers.Info.Printf("Instance Start() starts")
 	ctx, cancel := context.WithTimeout(ctx, 1000*time.Millisecond)
 	defer cancel()
 	// ---------
@@ -122,13 +121,13 @@ func (i Instance) Start(ctx context.Context, instanceid string) {
 	resp, err := client.Do(req)
 	// ----------
 	if err != nil {
-		fmt.Println("Errored when sending request to the server")
+		loggers.Info.Printf("Instance Start() Errored when sending request to the server")
 		return
 	}
 	// ---------
 	defer resp.Body.Close()
 	respBody, _ := ioutil.ReadAll(resp.Body)
-
-	fmt.Println(resp.Status)
-	fmt.Println(string(respBody))
+	// ----
+	loggers.Info.Printf(resp.Status)
+	loggers.Info.Printf(string(respBody))
 }

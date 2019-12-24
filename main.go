@@ -2,18 +2,23 @@ package main
 
 import (
 	"context"
+	"io/ioutil"
 	"log"
 	"os"
 	"os/signal"
 	"time"
 
 	"github.com/duoflow/yc-snapshot/config"
+	"github.com/duoflow/yc-snapshot/loggers"
 	"github.com/duoflow/yc-snapshot/snapshot"
 	"github.com/duoflow/yc-snapshot/token"
 	"github.com/robfig/cron"
 )
 
 func main() {
+	// make loggers initialization
+	loggers.Init(ioutil.Discard, os.Stdout, os.Stdout, os.Stderr)
+	//-----------
 	ctx := context.Background()
 	conf, vms, _ := config.ReadConfig(ctx)
 	//fmt.Println(conf)
@@ -24,8 +29,9 @@ func main() {
 	//
 	c := cron.New()
 	// "35 23 */2 * *"
-	c.AddFunc("*/1 * * * *", func() { snap.MakeSnapshot(ctx) })
+	c.AddFunc("*/1 * * * *", func() { loggers.Info.Printf("Hello") })
 	c.Start()
+	snap.MakeSnapshot(ctx)
 	// start listening for terminate signals
 	channel := make(chan os.Signal)
 	signal.Notify(channel, os.Interrupt)
@@ -43,7 +49,7 @@ func main() {
 	for {
 		select {
 		case <-keepaliveTicker.C:
-			log.Printf("YCSD Keepalive - I'm still alive!")
+			loggers.Info.Printf("YCSD Daemon Keepalive - I'm still alive!")
 		}
 	}
 }
