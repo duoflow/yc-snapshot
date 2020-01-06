@@ -3,5 +3,10 @@
         "VMname": "vm001",
         "VMid": "ef3cbgorepe1bquo0efr",
         "VMhddid": "ef3puff5vetp1q86qjrj"
+    },
+    {
+        "VMname": "vm002",
+        "VMid": "ef3ormdcirmu2eb3pvsd",
+        "VMhddid": "ef3p3bpp64h6mmt50gc2"
     }
 ]

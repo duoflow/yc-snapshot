@@ -31,7 +31,9 @@ func main() {
 	// "35 23 */2 * *"
 	c.AddFunc("*/1 * * * *", func() { loggers.Info.Printf("Hello") })
 	c.Start()
+	//snap.ListSnapshots(ctx)
 	snap.MakeSnapshot(ctx)
+
 	// start listening for terminate signals
 	channel := make(chan os.Signal)
 	signal.Notify(channel, os.Interrupt)
