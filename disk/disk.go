@@ -2,19 +2,27 @@ package disk
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"time"
 
 	"github.com/duoflow/yc-snapshot/config"
+	"github.com/duoflow/yc-snapshot/loggers"
 )
 
 // Disk - struct for yc disk operations
 type Disk struct {
 	Token    string
 	Folderid string
+}
+
+// Diskinfo  - struct for disk info representation
+type Diskinfo struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+	Size string `json:"size"`
 }
 
 // New - constructor function for Disk
@@ -25,7 +33,7 @@ func New(conf config.Configuration) Disk {
 
 // List - function for listing of all disks
 func (d Disk) List(ctx context.Context) {
-	log.Println("List of function starts")
+	loggers.Info.Println("List of function starts")
 	ctx, cancel := context.WithTimeout(ctx, 1000*time.Millisecond)
 	defer cancel()
 	// ---------
@@ -54,7 +62,7 @@ func (d Disk) List(ctx context.Context) {
 
 // GetDiskInfo - function for listing of all disks
 func (d Disk) GetDiskInfo(ctx context.Context, diskid string) {
-	log.Println("Function -GetDiskInfo- starts")
+	loggers.Info.Println("Disk GetDiskInfo() starts")
 	ctx, cancel := context.WithTimeout(ctx, 1000*time.Millisecond)
 	defer cancel()
 	// ---------
@@ -72,7 +80,12 @@ func (d Disk) GetDiskInfo(ctx context.Context, diskid string) {
 	// ---------
 	defer resp.Body.Close()
 	respBody, _ := ioutil.ReadAll(resp.Body)
-
-	fmt.Println(resp.Status)
-	fmt.Println(string(respBody))
+	// parse disk info
+	var diskinfo Diskinfo
+	parsestatus := json.Unmarshal(respBody, &diskinfo)
+	if parsestatus != nil {
+		loggers.Error.Printf("Disk GetDiskInfo() Parsing error: %s", parsestatus.Error())
+	}
+	// ----------
+	loggers.Info.Println(diskinfo)
 }

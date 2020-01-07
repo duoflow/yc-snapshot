@@ -82,8 +82,8 @@ func (snap Snapshot) ListSnapshots(ctx context.Context) Snapshotlist {
 	if parsestatus != nil {
 		loggers.Error.Printf("Snapshot List() Parsing error: %s", parsestatus.Error())
 	}
-	loggers.Info.Printf("Snapshot List() List parsed info:\n")
-	loggers.Info.Println(SnapList.SnapshotsArray)
+	//loggers.Info.Printf("Snapshot List() List parsed info:\n")
+	//loggers.Info.Println(SnapList.SnapshotsArray)
 	return SnapList
 }
 
