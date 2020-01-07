@@ -4,5 +4,6 @@
     "KeyID": "ajebpdmm4erbr1a12pkf",
     "ServiceAccountID": "aje7isfpgug1i4tcu1ne",
     "PrivateRSAKeyFile": "privatersakey.pem",
-    "StartTime": "23:36"
+    "StartTime": "35 23 * * *",
+    "CleanUpTime": "35 1 */2 * *"
 }

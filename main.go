@@ -29,10 +29,9 @@ func main() {
 	//
 	c := cron.New()
 	// "35 23 */2 * *"
-	c.AddFunc("*/1 * * * *", func() { loggers.Info.Printf("Hello") })
+	c.AddFunc(conf.StartTime, func() { snap.MakeSnapshot(ctx) })
+	c.AddFunc(conf.CleanUpTime, func() { snap.CleanUpOldSnapshots(ctx) })
 	c.Start()
-	//snap.ListSnapshots(ctx)
-	snap.MakeSnapshot(ctx)
 
 	// start listening for terminate signals
 	channel := make(chan os.Signal)
@@ -47,7 +46,7 @@ func main() {
 	}()
 
 	// plan keepalive job
-	keepaliveTicker := time.NewTicker(30 * time.Second)
+	keepaliveTicker := time.NewTicker(30 * time.Minute)
 	for {
 		select {
 		case <-keepaliveTicker.C:

@@ -280,3 +280,18 @@ func (snap Snapshot) StartVM(ctx context.Context, vmid string) int {
 	loggers.Error.Printf("Snapshot StartVM() VM with VMid=%s hasn't started in sleep timer", vmid)
 	return 0
 }
+
+// CleanUpOldSnapshots - function for listing of partucular snapshot
+func (snap Snapshot) CleanUpOldSnapshots(ctx context.Context) {
+	loggers.Info.Printf("Snapshot CleanUpOldSnapshots() starts")
+	ctx, cancel := context.WithTimeout(ctx, 1000*time.Millisecond)
+	defer cancel()
+	// ---------
+	//snaplist := snap.ListSnapshots(ctx)
+	// ---------
+	for _, vm := range snap.vms {
+		go func(vmi config.VirtualMachine) {
+			loggers.Info.Printf("Snapshot CleanUpOldSnapshots() CleanUp Snapshots for VM=%s", vmi.VMid)
+		}(vm)
+	}
+}

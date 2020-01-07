@@ -26,6 +26,7 @@ type Configuration struct {
 	ServiceAccountID  string
 	PrivateRSAKeyFile string
 	StartTime         string
+	CleanUpTime       string
 }
 
 // ReadConfig - function to read config from yaml file
