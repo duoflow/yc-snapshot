@@ -22,7 +22,7 @@ func main() {
 	ctx := context.Background()
 	conf, vms, _ := config.ReadConfig(ctx)
 	// init telegram bot
-	telegrambot.Initv2(conf.TelegramBotToken)
+	telegrambot.Initv3(conf.TelegramBotToken)
 	// get new IAM token
 	token.GetIAMToken(&conf)
 	// create
