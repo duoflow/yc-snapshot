@@ -12,6 +12,7 @@ someOtherfoler/
 *.o
 *.so
 *.pem
+ycsd.conf.json
 
 # Packages #
 ############
