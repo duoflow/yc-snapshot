@@ -5,5 +5,6 @@
     "ServiceAccountID": "aje7isfpgug1i4tcu1ne",
     "PrivateRSAKeyFile": "privatersakey.pem",
     "StartTime": "35 23 * * *",
-    "CleanUpTime": "35 1 */2 * *"
+    "CleanUpTime": "35 1 */2 * *",
+    "TelegramBotToken": "1040320811:AAHA6ISiPqsK4WuN9UvjUSqpsmWseaJK9uM"
 }

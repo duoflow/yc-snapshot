@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"io/ioutil"
-	"log"
 	"os"
 	"os/signal"
 	"time"
@@ -11,6 +10,7 @@ import (
 	"github.com/duoflow/yc-snapshot/config"
 	"github.com/duoflow/yc-snapshot/loggers"
 	"github.com/duoflow/yc-snapshot/snapshot"
+	"github.com/duoflow/yc-snapshot/telegrambot"
 	"github.com/duoflow/yc-snapshot/token"
 	"github.com/robfig/cron"
 )
@@ -21,7 +21,8 @@ func main() {
 	//-----------
 	ctx := context.Background()
 	conf, vms, _ := config.ReadConfig(ctx)
-	//fmt.Println(conf)
+	// init telegram bot
+	telegrambot.Initv2(conf.TelegramBotToken)
 	// get new IAM token
 	token.GetIAMToken(&conf)
 	// create
@@ -29,8 +30,8 @@ func main() {
 	//
 	c := cron.New()
 	// "35 23 */2 * *"
-	c.AddFunc(conf.StartTime, func() { snap.MakeSnapshot(ctx) })
-	c.AddFunc(conf.CleanUpTime, func() { snap.CleanUpOldSnapshots(ctx) })
+	c.AddFunc(conf.StartTime, func() { loggers.Warning.Printf("Make snapshot f() %s", snap.Folderid) /*snap.MakeSnapshot(ctx)/**/ })
+	c.AddFunc(conf.CleanUpTime, func() { loggers.Warning.Printf("Cleanup snapshot f()") /*snap.CleanUpOldSnapshots(ctx) /**/ })
 	c.Start()
 
 	// start listening for terminate signals
@@ -40,7 +41,7 @@ func main() {
 	go func() {
 		select {
 		case sig := <-channel:
-			log.Printf("YCSD Aborting. Reason: %s signal was received.\n", sig)
+			loggers.Trace.Printf("YCSD Aborting. Reason: %s signal was received.\n", sig)
 			os.Exit(1)
 		}
 	}()

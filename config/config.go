@@ -27,6 +27,7 @@ type Configuration struct {
 	PrivateRSAKeyFile string
 	StartTime         string
 	CleanUpTime       string
+	TelegramBotToken  string
 }
 
 // ReadConfig - function to read config from yaml file
