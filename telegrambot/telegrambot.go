@@ -3,6 +3,7 @@ package telegrambot
 import (
 	"github.com/duoflow/yc-snapshot/loggers"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+        "strconv"
 )
 
 var (
@@ -19,7 +20,7 @@ func Init(tgtoken string) {
 		loggers.Error.Printf("Error while Telegram bot init: %s", err.Error())
 	}
 	//
-	Telegbot.Debug = true
+	//Telegbot.Debug = true
 	loggers.Info.Printf("Authorized on account %s", Telegbot.Self.UserName)
 	//
 	// channel initialization for updates from API
@@ -38,9 +39,9 @@ func Init(tgtoken string) {
 			Text := update.Message.Text
 			loggers.Info.Printf("Telegram bot [%s] %d %s", UserName, ChatID, Text)
 			// compose reply text
-			reply := Text
+			reply := Text + "ChatID = " + strconv.FormatInt(ChatID,10)
 			// compose reply message (chat ID + text)
-			msg := tgbotapi.NewMessage(ChatID, reply+"ChatID: %s"+string(ChatID))
+			msg := tgbotapi.NewMessage(ChatID, reply)
 			// send message back
 			Telegbot.Send(msg)
 		}
