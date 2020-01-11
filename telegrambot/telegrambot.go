@@ -7,6 +7,11 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 )
 
+var (
+	// Tgbot - telegram bot
+	Tgbot Telegbot
+)
+
 // Telegbot  - telegram bot interface
 type Telegbot struct {
 	// Telegbot - telegram bot api interface
@@ -15,19 +20,17 @@ type Telegbot struct {
 	ChatID int64
 }
 
-// New - Initializing of bot
-func New(tgtoken string) Telegbot {
-	t := Telegbot{}
-	t.ChatID = 185222660
+// Init - Initializing of bot
+func Init(tgtoken string) {
+	Tgbot.ChatID = 185222660
 	tg, err := tgbotapi.NewBotAPI(tgtoken)
 	if err != nil {
-		loggers.Error.Printf("Error while Telegram bot init: %s", err.Error())
+		loggers.Error.Printf("Telegram Init() Error while Telegram bot init: %s", err.Error())
+		Tgbot.bot = nil
 	} else {
-		t.bot = tg
-		loggers.Info.Println("Telegram API initialised")
+		Tgbot.bot = tg
+		loggers.Info.Println("Telegram Init() Telegram API initialised")
 	}
-	//
-	return t
 }
 
 // Serve - function for message exchange
@@ -73,6 +76,7 @@ func (t Telegbot) Serve() {
 			}
 		}
 	}
+	// end
 }
 
 // SendMessage - send message to admin
