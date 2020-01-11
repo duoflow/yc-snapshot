@@ -12,6 +12,7 @@ import (
 	"github.com/duoflow/yc-snapshot/config"
 	"github.com/duoflow/yc-snapshot/instance"
 	"github.com/duoflow/yc-snapshot/loggers"
+	"github.com/duoflow/yc-snapshot/telegrambot"
 	"github.com/olekukonko/tablewriter"
 )
 
@@ -190,6 +191,7 @@ func (snap Snapshot) Create(ctx context.Context, Diskid string, SnapName string,
 // MakeSnapshot - function for create snapshot
 func (snap Snapshot) MakeSnapshot(ctx context.Context) {
 	loggers.Info.Printf("MakeSnapshot() starts")
+	telegrambot.Tgbot.SendMessage("MakeSnapshot() starts")
 	ctx, cancel := context.WithTimeout(ctx, 1000*time.Millisecond)
 	defer cancel()
 	// ---------
