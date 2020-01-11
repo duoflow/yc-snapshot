@@ -23,7 +23,6 @@ func main() {
 	conf, vms, _ := config.ReadConfig(ctx)
 	// init telegram bot
 	telegrambot.Init(conf.TelegramBotToken)
-	loggers.Info.Println(telegrambot.Tgbot.ChatID)
 	go telegrambot.Tgbot.Serve()
 	// get new IAM token
 	token.GetIAMToken(&conf)
@@ -32,8 +31,8 @@ func main() {
 	//
 	c := cron.New()
 	// "35 23 */2 * *"
-	c.AddFunc(conf.StartTime, func() { loggers.Warning.Printf("Make snapshot f() %s", snap.Folderid) /*snap.MakeSnapshot(ctx)/**/ })
-	c.AddFunc(conf.CleanUpTime, func() { loggers.Warning.Printf("Cleanup snapshot f()") /*snap.CleanUpOldSnapshots(ctx) /**/ })
+	c.AddFunc(conf.StartTime, func() { snap.MakeSnapshot(ctx) /**/ })
+	c.AddFunc(conf.CleanUpTime, func() { snap.CleanUpOldSnapshots(ctx) /**/ })
 	c.Start()
 
 	// start listening for terminate signals
