@@ -45,17 +45,17 @@ func Init(tgtoken string) {
 				default:
 					msg.Text = "I don't know that command"
 				}
+			} else {
+				// get Username who sent the message
+				UserName := update.Message.From.UserName
+				// get Chat ID
+				ChatID := update.Message.Chat.ID
+				// get text message
+				Text := update.Message.Text
+				loggers.Info.Printf("Telegram bot [%s] %d %s", UserName, ChatID, Text)
+				// compose reply text
+				msg.Text = Text + "   Reply for ChatID = " + strconv.FormatInt(ChatID, 10)
 			}
-			// get Username who sent the message
-			UserName := update.Message.From.UserName
-			// get Chat ID
-			ChatID := update.Message.Chat.ID
-			// get text message
-			Text := update.Message.Text
-			loggers.Info.Printf("Telegram bot [%s] %d %s", UserName, ChatID, Text)
-			// compose reply text
-			msg.Text = Text + "   Reply for ChatID = " + strconv.FormatInt(ChatID, 10)
-			// compose reply message (chat ID + text)
 			// send message back
 			Telegbot.Send(msg)
 		}
