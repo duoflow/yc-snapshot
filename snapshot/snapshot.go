@@ -62,6 +62,7 @@ type Snapshotlist struct {
 // New - constructor function for Snapshot
 func New(conf *config.Configuration, vms []config.VirtualMachine) Snapshot {
 	snap := Snapshot{conf.Token, conf.Folderid, vms, instance.New(conf)}
+	telegrambot.Tgbot.SendMessage("Snapshot task created")
 	return snap
 }
 
