@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"os/signal"
@@ -22,8 +23,8 @@ func main() {
 	ctx := context.Background()
 	conf, vms, _ := config.ReadConfig(ctx)
 	// init telegram bot
-	telegrambot.Tgbot.New(conf.TelegramBotToken)
-	telegrambot.Tgbot.SendMessage("All's ok")
+	tgbot := telegrambot.New(conf.TelegramBotToken)
+	fmt.Println(tgbot.ChatID)
 	// get new IAM token
 	token.GetIAMToken(&conf)
 	// create snapshot tasks
