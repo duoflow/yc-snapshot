@@ -7,27 +7,43 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 )
 
-var (
-	// Telegbot - telegram bot api interface
-	Telegbot *tgbotapi.BotAPI
-	// ChatID - Chat ID for message sending
-	ChatID int64 = 185222660
-)
+// Tgbot - telegram bot
+var Tgbot Telegbot
 
-// Init - Initializing of bot
-func Init(tgtoken string) {
-	Telegbot, err := tgbotapi.NewBotAPI(tgtoken)
+// Telegbot  - telegram bot interface
+type Telegbot struct {
+	// Telegbot - telegram bot api interface
+	BotAPI *tgbotapi.BotAPI
+	// ChatID - Chat ID for message sending
+	ChatID int64
+}
+
+// New - Initializing of bot
+func (t Telegbot) New(tgtoken string) {
+	t.ChatID = 185222660
+	tg, err := tgbotapi.NewBotAPI(tgtoken)
 	if err != nil {
 		loggers.Error.Printf("Error while Telegram bot init: %s", err.Error())
+	} else {
+		t.BotAPI = tg
+		loggers.Info.Println("Telegram API initialised")
 	}
+
 	//
 	//Telegbot.Debug = true
-	loggers.Info.Printf("Authorized on account %s", Telegbot.Self.UserName)
+	loggers.Info.Printf("Authorized on account %s", t.BotAPI.Self.UserName)
 	//
+}
+
+// Serve - function for message exchange
+func (t Telegbot) Serve() {
 	// channel initialization for updates from API
 	var ucfg tgbotapi.UpdateConfig = tgbotapi.NewUpdate(0)
 	ucfg.Timeout = 60
-	uchannel, err := Telegbot.GetUpdatesChan(ucfg)
+	uchannel, err := t.BotAPI.GetUpdatesChan(ucfg)
+	if err != nil {
+		loggers.Error.Printf("Telegram Serve() Error while Telegram bot init: %s", err.Error())
+	}
 	// read update channel messages
 	for {
 		select {
@@ -58,14 +74,14 @@ func Init(tgtoken string) {
 					msg.Text = Text + "   Reply for ChatID = " + strconv.FormatInt(ChatID, 10)
 				}
 				// send message back
-				Telegbot.Send(msg)
+				t.BotAPI.Send(msg)
 			}
 		}
 	}
 }
 
 // SendMessage - send message to admin
-func SendMessage(m string) {
-	msg := tgbotapi.NewMessage(ChatID, m)
-	Telegbot.Send(msg)
+func (t Telegbot) SendMessage(m string) {
+	msg := tgbotapi.NewMessage(t.ChatID, m)
+	t.BotAPI.Send(msg)
 }
