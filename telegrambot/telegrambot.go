@@ -1,9 +1,10 @@
 package telegrambot
 
 import (
+	"strconv"
+
 	"github.com/duoflow/yc-snapshot/loggers"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
-        "strconv"
 )
 
 var (
@@ -31,6 +32,20 @@ func Init(tgtoken string) {
 	for {
 		select {
 		case update := <-uchannel:
+			// check if message is command
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "")
+			if update.Message.IsCommand() {
+				switch update.Message.Command() {
+				case "help":
+					msg.Text = "type /sayhi or /status."
+				case "sayhi":
+					msg.Text = "Hi :)"
+				case "status":
+					msg.Text = "I'm ok."
+				default:
+					msg.Text = "I don't know that command"
+				}
+			}
 			// get Username who sent the message
 			UserName := update.Message.From.UserName
 			// get Chat ID
@@ -39,9 +54,8 @@ func Init(tgtoken string) {
 			Text := update.Message.Text
 			loggers.Info.Printf("Telegram bot [%s] %d %s", UserName, ChatID, Text)
 			// compose reply text
-			reply := Text + "ChatID = " + strconv.FormatInt(ChatID,10)
+			msg.Text = Text + "   Reply for ChatID = " + strconv.FormatInt(ChatID, 10)
 			// compose reply message (chat ID + text)
-			msg := tgbotapi.NewMessage(ChatID, reply)
 			// send message back
 			Telegbot.Send(msg)
 		}
