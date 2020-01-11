@@ -11,7 +11,7 @@ var (
 	// Telegbot - telegram bot api interface
 	Telegbot *tgbotapi.BotAPI
 	// ChatID - Chat ID for message sending
-	ChatID int64
+	ChatID int64 = 185222660
 )
 
 // Init - Initializing of bot
@@ -62,4 +62,10 @@ func Init(tgtoken string) {
 			}
 		}
 	}
+}
+
+// SendMessage - send message to admin
+func SendMessage(m string) {
+	msg := tgbotapi.NewMessage(ChatID, m)
+	Telegbot.Send(msg)
 }

@@ -23,9 +23,10 @@ func main() {
 	conf, vms, _ := config.ReadConfig(ctx)
 	// init telegram bot
 	telegrambot.Init(conf.TelegramBotToken)
+	telegrambot.SendMessage("All's ok")
 	// get new IAM token
 	token.GetIAMToken(&conf)
-	// create
+	// create snapshot tasks
 	snap := snapshot.New(&conf, vms)
 	//
 	c := cron.New()

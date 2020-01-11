@@ -1,6 +1,7 @@
 package snapshot
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"io/ioutil"
@@ -11,6 +12,21 @@ import (
 	"github.com/duoflow/yc-snapshot/config"
 	"github.com/duoflow/yc-snapshot/instance"
 	"github.com/duoflow/yc-snapshot/loggers"
+	"github.com/olekukonko/tablewriter"
+)
+
+// Status - status for Disk snapshot creation
+type Status struct {
+	VMname       string
+	DiskID       string
+	SnapshotID   string
+	SnapshotDate string
+	Status       string
+}
+
+var (
+	// StatusRegister - Register of snapshot creation jobs
+	StatusRegister []Status
 )
 
 // Snapshot - struct for yc snapshot operations
@@ -185,9 +201,9 @@ func (snap Snapshot) MakeSnapshot(ctx context.Context) {
 			// if VM status = RUNNING shutdown the VM
 			if vmstatus == "RUNNING" {
 				vmstopstate := snap.StopVM(ctx, vmi.VMid)
-				loggers.Info.Printf("MakeSnapshot(): VM stop operation state = %d", vmstopstate)
+				loggers.Info.Printf("MakeSnapshot(): VM stop operation state = %s", vmstopstate)
 				//------
-				if vmstopstate == 1 {
+				if vmstopstate == "STOPPED" {
 					t := time.Now()
 					// snapshot description with timestamp
 					snapdesc := "autosnap" + "---" + t.Format("2006-01-02-150405")
@@ -237,7 +253,7 @@ func (snap Snapshot) MakeSnapshot(ctx context.Context) {
 }
 
 // StopVM - function for create snapshot
-func (snap Snapshot) StopVM(ctx context.Context, vmid string) int {
+func (snap Snapshot) StopVM(ctx context.Context, vmid string) string {
 	loggers.Info.Printf("Snapshot StopVM() starts")
 	ctx, cancel := context.WithTimeout(ctx, 1000*time.Millisecond)
 	defer cancel()
@@ -251,11 +267,11 @@ func (snap Snapshot) StopVM(ctx context.Context, vmid string) int {
 	loggers.Info.Printf("Snapshot StopVM() VM status after shutdown = %s", vmstatus)
 	if vmstatus == "STOPPED" {
 		loggers.Info.Printf("Snapshot StopVM() VM with VMid=%s has stopped in sleep timer", vmid)
-		return 1
+		return "STOPPED"
 	}
 	// ----
 	loggers.Error.Printf("Snapshot StopVM() VM with VMid=%s hasn't stopped in sleep timer", vmid)
-	return 0
+	return "DONOTSTOPPED"
 }
 
 // StartVM - function for create snapshot
@@ -294,4 +310,24 @@ func (snap Snapshot) CleanUpOldSnapshots(ctx context.Context) {
 			loggers.Info.Printf("Snapshot CleanUpOldSnapshots() CleanUp Snapshots for VM=%s", vmi.VMid)
 		}(vm)
 	}
+}
+
+// PrintStatusRegister - to get status information about snapshots
+func (snap Snapshot) PrintStatusRegister() {
+	data := [][]string{
+		[]string{"A", "The Good", "500"},
+		[]string{"B", "The Very very Bad Man", "288"},
+		[]string{"C", "The Ugly", "120"},
+		[]string{"D", "The Gopher", "800"},
+	}
+	// buffer to write table
+	buf := new(bytes.Buffer)
+	table := tablewriter.NewWriter(buf)
+	table.SetHeader([]string{"VMname", "DiskID", "SnapshotID", "SnapshotDate", "Status"})
+
+	for _, v := range data {
+		table.Append(v)
+	}
+	table.Render() // Send output
+	loggers.Info.Println(buf.String())
 }
