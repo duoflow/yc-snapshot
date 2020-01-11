@@ -37,14 +37,14 @@ func Init(tgtoken string) {
 				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "")
 				if update.Message.IsCommand() {
 					switch update.Message.Command() {
-					case "reg":
-						msg.Text = "type /sayhi or /status."
-					case "sayhi":
-						msg.Text = "Hi :)"
+					case "register":
+						msg.Text = "Thank you. I've been registered"
+					case "unregister":
+						msg.Text = "Well...Ok, you've been unregistered"
 					case "status":
 						msg.Text = "I'm ok."
 					default:
-						msg.Text = "I don't know that command"
+						msg.Text = "Whazz up man! How are you?"
 					}
 				} else {
 					// get Username who sent the message
