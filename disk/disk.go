@@ -12,6 +12,11 @@ import (
 	"github.com/duoflow/yc-snapshot/loggers"
 )
 
+var (
+	// Client - Client for API requests
+	Client Disk
+)
+
 // Disk - struct for yc disk operations
 type Disk struct {
 	Token    string
@@ -25,10 +30,10 @@ type Diskinfo struct {
 	Size string `json:"size"`
 }
 
-// New - constructor function for Disk
-func New(conf config.Configuration) Disk {
-	d := Disk{conf.Token, conf.Folderid}
-	return d
+// Init - constructor function for Disk
+func Init(conf *config.Configuration) {
+	Client.Token = conf.Token
+	Client.Folderid = conf.Folderid
 }
 
 // List - function for listing of all disks
@@ -61,7 +66,9 @@ func (d Disk) List(ctx context.Context) {
 }
 
 // GetDiskInfo - function for listing of all disks
-func (d Disk) GetDiskInfo(ctx context.Context, diskid string) {
+func (d Disk) GetDiskInfo(ctx context.Context, diskid string) Diskinfo {
+	// diskinfo struct
+	diskinfo := Diskinfo{"", "", ""}
 	loggers.Info.Println("Disk GetDiskInfo() starts")
 	ctx, cancel := context.WithTimeout(ctx, 1000*time.Millisecond)
 	defer cancel()
@@ -74,18 +81,18 @@ func (d Disk) GetDiskInfo(ctx context.Context, diskid string) {
 	resp, err := client.Do(req)
 	// ----------
 	if err != nil {
-		fmt.Println("Errored when sending request to the server")
-		return
+		loggers.Error.Printf("Errored when sending request to the server: %s", err.Error())
+	} else {
+		loggers.Info.Printf("Disk GetDiskInfo() Request status = %s", resp.Status)
+		respBody, _ := ioutil.ReadAll(resp.Body)
+		// parse disk info
+		parsestatus := json.Unmarshal(respBody, &diskinfo)
+		if parsestatus != nil {
+			loggers.Error.Printf("Disk GetDiskInfo() Parsing error: %s", parsestatus.Error())
+		} else {
+			loggers.Info.Println("Disk info: ", diskinfo)
+		}
 	}
-	// ---------
 	defer resp.Body.Close()
-	respBody, _ := ioutil.ReadAll(resp.Body)
-	// parse disk info
-	var diskinfo Diskinfo
-	parsestatus := json.Unmarshal(respBody, &diskinfo)
-	if parsestatus != nil {
-		loggers.Error.Printf("Disk GetDiskInfo() Parsing error: %s", parsestatus.Error())
-	}
-	// ----------
-	loggers.Info.Println(diskinfo)
+	return diskinfo
 }

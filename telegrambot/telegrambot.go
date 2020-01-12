@@ -18,23 +18,30 @@ type Telegbot struct {
 	bot *tgbotapi.BotAPI
 	// ChatID - Chat ID for message sending
 	ChatID int64
+	// InitFlag - if Init func was called
+	InitFlag bool
 }
 
 // Init - Initializing of bot
 func Init(tgtoken string) {
 	Tgbot.ChatID = 185222660
+	Tgbot.InitFlag = false
 	tg, err := tgbotapi.NewBotAPI(tgtoken)
 	if err != nil {
 		loggers.Error.Printf("Telegram Init() Error while Telegram bot init: %s", err.Error())
 		Tgbot.bot = nil
 	} else {
 		Tgbot.bot = tg
+		Tgbot.InitFlag = true
 		loggers.Info.Println("Telegram Init() Telegram API initialised")
 	}
 }
 
 // Serve - function for message exchange
 func (t Telegbot) Serve() {
+	if t.InitFlag == false {
+		return
+	}
 	// channel initialization for updates from API
 	var ucfg tgbotapi.UpdateConfig = tgbotapi.NewUpdate(0)
 	ucfg.Timeout = 60
@@ -81,6 +88,9 @@ func (t Telegbot) Serve() {
 
 // SendMessage - send message to admin
 func (t Telegbot) SendMessage(m string) {
+	if t.InitFlag == false {
+		return
+	}
 	msg := tgbotapi.NewMessage(t.ChatID, m)
 	t.bot.Send(msg)
 }

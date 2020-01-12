@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"regexp"
@@ -229,11 +230,11 @@ func (snap Snapshot) MakeSnapshot(ctx context.Context) {
 					if snapcreateflag == "200 OK" {
 						// start cycle to check stapshot status
 						awaiting := 0
-						timeinterval := 3
-						for i := 0; i < 15; i++ {
+						timeinterval := 10
+						for i := 0; i < 12; i++ {
 							awaiting += timeinterval
 							loggers.Info.Printf("MakeSnapshot(): Check snapshot status - start timeout. Time=%d", awaiting)
-							time.Sleep(3 * time.Minute)
+							time.Sleep(10 * time.Minute)
 							loggers.Info.Printf("MakeSnapshot(): Check snapshot status - end timeout. Time=%d", awaiting)
 							snapstatus, snapid := snap.GetSnapStatusByName(ctx, snapname)
 							if snapstatus == "READY" {
@@ -292,7 +293,7 @@ func (snap Snapshot) StopVM(ctx context.Context, vmid string) string {
 	}
 	// ----
 	loggers.Error.Printf("Snapshot StopVM() VM with VMid=%s hasn't stopped in sleep timer", vmid)
-	return "DONOTSTOPPED"
+	return "DO_NOT_STOPPED"
 }
 
 // StartVM - function for create snapshot
@@ -315,7 +316,8 @@ func (snap Snapshot) StartVM(ctx context.Context, vmid string) string {
 	}
 	// ----
 	loggers.Error.Printf("Snapshot StartVM() VM with VMid=%s hasn't started in sleep timer", vmid)
-	return "ERROR"
+	telegrambot.Tgbot.SendMessage(fmt.Sprintf("VM [%s] do not runnning. Cancel snapshot creation", vmid))
+	return "ERROR:VM_DO_NOT_RUNNING"
 }
 
 // CleanUpOldSnapshots - function for listing of partucular snapshot

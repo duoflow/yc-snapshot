@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/duoflow/yc-snapshot/config"
+	"github.com/duoflow/yc-snapshot/disk"
 	"github.com/duoflow/yc-snapshot/loggers"
 	"github.com/duoflow/yc-snapshot/snapshot"
 	"github.com/duoflow/yc-snapshot/telegrambot"
@@ -20,12 +21,18 @@ func main() {
 	loggers.Init(ioutil.Discard, os.Stdout, os.Stdout, os.Stderr)
 	//-----------
 	ctx := context.Background()
+	// read YCSD daemon global configuration from config file
 	conf, vms, _ := config.ReadConfig(ctx)
-	// init telegram bot
+	// init telegram client (bot)
 	telegrambot.Init(conf.TelegramBotToken)
+	// start serving telegram chat
 	go telegrambot.Tgbot.Serve()
 	// get new IAM token
 	token.GetIAMToken(&conf)
+	// init disk client
+	disk.Init(&conf)
+	loggers.Info.Printf("Get disk info for HDD = %s", vms[0].VMhddid)
+	disk.Client.GetDiskInfo(ctx, vms[0].VMhddid)
 	// create snapshot tasks
 	snap := snapshot.New(&conf, vms)
 	//
