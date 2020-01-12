@@ -197,6 +197,7 @@ func (snap Snapshot) Create(ctx context.Context, Diskid string, SnapName string,
 // MakeSnapshot - function for create snapshot
 func (snap Snapshot) MakeSnapshot(ctx context.Context) {
 	loggers.Info.Printf("MakeSnapshot() starts")
+	telegrambot.Tgbot.SendMessage("Snapshot tasks have started")
 	ctx, cancel := context.WithTimeout(ctx, 1000*time.Millisecond)
 	defer cancel()
 	// ---------
