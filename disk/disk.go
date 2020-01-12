@@ -85,6 +85,7 @@ func (d Disk) GetDiskInfo(ctx context.Context, diskid string) Diskinfo {
 	} else {
 		loggers.Info.Printf("Disk GetDiskInfo() Request status = %s", resp.Status)
 		respBody, _ := ioutil.ReadAll(resp.Body)
+		loggers.Info.Printf(string(respBody))
 		// parse disk info
 		parsestatus := json.Unmarshal(respBody, &diskinfo)
 		if parsestatus != nil {
