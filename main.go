@@ -33,8 +33,7 @@ func main() {
 	disk.Init(&conf)
 	// create snapshot tasks
 	snap := snapshot.New(&conf, vms)
-	snap.MakeSnapshot(ctx)
-	//
+	// create crontab tasks
 	c := cron.New()
 	// "35 23 */2 * *"
 	c.AddFunc(conf.StartTime, func() { snap.MakeSnapshot(ctx) /**/ })
