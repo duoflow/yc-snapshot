@@ -285,6 +285,13 @@ func (snap Snapshot) MakeSnapshot(ctx context.Context) {
 			}
 			// add registerstatusunit to register
 			StatusRegister = append(StatusRegister, registerstatusunit)
+			messagetobot := "Snapshot task result: \n"
+			messagetobot += "VMname: " + registerstatusunit.VMname + "\n"
+			messagetobot += "VM status: " + registerstatusunit.VMstatus + "\n"
+			messagetobot += "DiskID: " + registerstatusunit.DiskID + "\n"
+			messagetobot += "SnapshotID: " + registerstatusunit.SnapshotID + "\n"
+			messagetobot += "Snapshot status: " + registerstatusunit.Status + "\n"
+			telegrambot.Tgbot.SendMessage(messagetobot)
 		}(vm, index)
 	}
 }

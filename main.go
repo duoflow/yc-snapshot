@@ -31,8 +31,6 @@ func main() {
 	token.GetIAMToken(&conf)
 	// init disk client
 	disk.Init(&conf)
-	loggers.Info.Printf("Get disk info for HDD = %s", vms[0].VMhddid)
-	disk.Client.GetDiskInfo(ctx, vms[0].VMhddid)
 	// create snapshot tasks
 	snap := snapshot.New(&conf, vms)
 	snap.MakeSnapshot(ctx)
