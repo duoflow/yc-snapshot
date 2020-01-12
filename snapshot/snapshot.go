@@ -8,7 +8,10 @@ import (
 	"io/ioutil"
 	"net/http"
 	"regexp"
+	"strings"
 	"time"
+
+	"github.com/duoflow/yc-snapshot/disk"
 
 	"github.com/duoflow/yc-snapshot/config"
 	"github.com/duoflow/yc-snapshot/instance"
@@ -187,8 +190,8 @@ func (snap Snapshot) Create(ctx context.Context, Diskid string, SnapName string,
 	defer resp.Body.Close()
 	respBody, _ := ioutil.ReadAll(resp.Body)
 	// log events
-	loggers.Info.Printf("Snapshot Create() REST API Request status = %s", resp.Status)
-	loggers.Trace.Printf("Snapshot Create() EST API Request body = \n%s", string(respBody))
+	loggers.Info.Printf("Snapshot Create() REST API Responce status = %s", resp.Status)
+	loggers.Info.Printf("Snapshot Create() REST API Responce body:\n %s", string(respBody))
 	return resp.Status
 }
 
@@ -200,29 +203,34 @@ func (snap Snapshot) MakeSnapshot(ctx context.Context) {
 	// ---------
 	for index, vm := range snap.vms {
 		go func(vmi config.VirtualMachine, i int) {
+			loggers.Info.Printf("Index = %d", i)
 			loggers.Info.Printf("MakeSnapshot(): Discovered VMs: VMid=%s", vmi.VMid)
 			// define register data
-			StatusRegister[i].VMname = vmi.VMname
-			StatusRegister[i].DiskID = vmi.VMhddid
+			var registerstatusunit Status
+			registerstatusunit.VMname = vmi.VMname
+			registerstatusunit.DiskID = vmi.VMhddid
 			// get vm status
 			vmstatus := snap.instance.Get(ctx, vmi.VMid)
 			// if VM status = RUNNING shutdown the VM
 			if vmstatus == "RUNNING" {
 				// define register data
-				StatusRegister[i].VMstatus = vmstatus
+				registerstatusunit.VMstatus = vmstatus
 				// stop target VM
 				vmstopstate := snap.StopVM(ctx, vmi.VMid)
 				loggers.Info.Printf("MakeSnapshot(): VM stop operation state = %s", vmstopstate)
 				//------
 				if vmstopstate == "STOPPED" {
 					// define register data
-					StatusRegister[i].VMstatus = vmstopstate
+					registerstatusunit.VMstatus = vmstopstate
 					// define time
 					t := time.Now()
+					// get disk size
+					diskinfo := disk.Client.GetDiskInfo(ctx, vmi.VMhddid)
 					// snapshot description with timestamp
-					snapdesc := "autosnap" + "-+-" + t.Format(time.RFC3339)
+					date := strings.ToLower(strings.ReplaceAll(t.Format("2006-01-02T15:04:05"), ":", "-"))
+					snapdesc := "autosnap" + "-size-" + diskinfo.Size + "-date-" + date
 					// snapshot name with timestamp
-					snapname := vmi.VMhddid + "-+-" + t.Format(time.RFC3339)
+					snapname := vmi.VMhddid + "-size-" + diskinfo.Size + "-date-" + date
 					loggers.Info.Printf("MakeSnapshot(): Start creating snapshot for VM=%s, Disk=%s with snapshot id=%s", vmi.VMid, vmi.VMhddid, snapname)
 					// REST API Call to create snapshot
 					snapcreateflag := snap.Create(ctx, vmi.VMhddid, snapname, snapdesc)
@@ -235,13 +243,13 @@ func (snap Snapshot) MakeSnapshot(ctx context.Context) {
 							awaiting += timeinterval
 							loggers.Info.Printf("MakeSnapshot(): Check snapshot status - start timeout. Time=%d", awaiting)
 							time.Sleep(10 * time.Minute)
-							loggers.Info.Printf("MakeSnapshot(): Check snapshot status - end timeout. Time=%d", awaiting)
 							snapstatus, snapid := snap.GetSnapStatusByName(ctx, snapname)
+							loggers.Info.Printf("MakeSnapshot(): Check snapshot id [%s] status = %s. End timeout. Time=%d", snapid, snapstatus, awaiting)
 							if snapstatus == "READY" {
 								loggers.Info.Printf("MakeSnapshot(): Snapshot status: %s, Time=%d", snapstatus, awaiting)
 								// define register data
-								StatusRegister[i].SnapshotID = snapid
-								StatusRegister[i].Status = snapstatus
+								registerstatusunit.SnapshotID = snapid
+								registerstatusunit.Status = snapstatus
 								// if snapshot is ready then start VM
 								vmstartstate := snap.StartVM(ctx, vmi.VMid)
 								// if VM has started then nothing to do
@@ -252,24 +260,31 @@ func (snap Snapshot) MakeSnapshot(ctx context.Context) {
 							} else {
 								loggers.Info.Printf("MakeSnapshot(): Snapshot status: %s, Time=%d", snapstatus, awaiting)
 								// define register data
-								StatusRegister[i].SnapshotID = snapid
-								StatusRegister[i].Status = snapstatus
+								registerstatusunit.SnapshotID = snapid
+								registerstatusunit.Status = snapstatus
 							}
 						}
 					} else {
 						loggers.Error.Printf("MakeSnapshot(): Error in Create Snapshot REST API Call: %s", snapcreateflag)
+						vmstartstate := snap.StartVM(ctx, vmi.VMid)
+						// if VM has started then nothing to do
+						if vmstartstate == "RUNNING" {
+							loggers.Error.Printf("MakeSnapshot(): VM with ID=%s has started successfully after snapshot fail", vmi.VMid)
+						}
 						// define register data
-						StatusRegister[i].SnapshotID = "ERROR:CALL_API"
-						StatusRegister[i].Status = "ERROR:CALL_API"
+						registerstatusunit.SnapshotID = "ERROR:CALL_API"
+						registerstatusunit.Status = "ERROR:CALL_API"
 					}
 				}
 			} else {
 				loggers.Error.Printf("MakeSnapshot(): VM with VMid=%s is not in RUNNING state", vmi.VMid)
 				loggers.Error.Printf("MakeSnapshot(): SEND EMAIL NOTIFICATION HERE")
 				// define register data
-				StatusRegister[i].SnapshotID = "ERROR:VM_NOT_RUNNING"
-				StatusRegister[i].Status = "ERROR:VM_NOT_RUNNING"
+				registerstatusunit.SnapshotID = "ERROR:VM_NOT_RUNNING"
+				registerstatusunit.Status = "ERROR:VM_NOT_RUNNING"
 			}
+			// add registerstatusunit to register
+			StatusRegister = append(StatusRegister, registerstatusunit)
 		}(vm, index)
 	}
 }

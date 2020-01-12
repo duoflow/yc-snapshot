@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/duoflow/yc-snapshot/config"
@@ -26,7 +27,6 @@ type Disk struct {
 // Diskinfo  - struct for disk info representation
 type Diskinfo struct {
 	ID   string `json:"id"`
-	Name string `json:"name"`
 	Size string `json:"size"`
 }
 
@@ -68,7 +68,7 @@ func (d Disk) List(ctx context.Context) {
 // GetDiskInfo - function for listing of all disks
 func (d Disk) GetDiskInfo(ctx context.Context, diskid string) Diskinfo {
 	// diskinfo struct
-	diskinfo := Diskinfo{"", "", ""}
+	diskinfo := Diskinfo{"", ""}
 	loggers.Info.Println("Disk GetDiskInfo() starts")
 	ctx, cancel := context.WithTimeout(ctx, 1000*time.Millisecond)
 	defer cancel()
@@ -85,7 +85,7 @@ func (d Disk) GetDiskInfo(ctx context.Context, diskid string) Diskinfo {
 	} else {
 		loggers.Info.Printf("Disk GetDiskInfo() Request status = %s", resp.Status)
 		respBody, _ := ioutil.ReadAll(resp.Body)
-		loggers.Info.Printf(string(respBody))
+		//loggers.Info.Printf(string(respBody))
 		// parse disk info
 		parsestatus := json.Unmarshal(respBody, &diskinfo)
 		if parsestatus != nil {
@@ -93,6 +93,14 @@ func (d Disk) GetDiskInfo(ctx context.Context, diskid string) Diskinfo {
 		} else {
 			loggers.Info.Println("Disk info: ", diskinfo)
 		}
+	}
+	// convert bytes to gigabytes by deviding on 1073741824 (1024^3)
+	if n, err := strconv.Atoi(diskinfo.Size); err == nil {
+		n = n / 1073741824
+		loggers.Info.Printf("Disk size converted from %s bytes to %d Gb", diskinfo.Size, n)
+		diskinfo.Size = strconv.Itoa(n) + "gb"
+	} else {
+		loggers.Error.Printf(diskinfo.Size, " is not an integer.")
 	}
 	defer resp.Body.Close()
 	return diskinfo

@@ -108,7 +108,7 @@ func (i Instance) Stop(ctx context.Context, instanceid string) {
 }
 
 // Start - function for listing of all disks
-func (i Instance) Start(ctx context.Context, instanceid string) {
+func (i Instance) Start(ctx context.Context, instanceid string) string {
 	loggers.Info.Printf("Instance Start() starts")
 	ctx, cancel := context.WithTimeout(ctx, 1000*time.Millisecond)
 	defer cancel()
@@ -122,12 +122,13 @@ func (i Instance) Start(ctx context.Context, instanceid string) {
 	// ----------
 	if err != nil {
 		loggers.Info.Printf("Instance Start() Errored when sending request to the server")
-		return
+		return "ERROR_REST_API_UNAVAILABLE"
 	}
 	// ---------
 	defer resp.Body.Close()
-	respBody, _ := ioutil.ReadAll(resp.Body)
+	//respBody, _ := ioutil.ReadAll(resp.Body)
 	// ----
 	loggers.Info.Printf(resp.Status)
-	loggers.Info.Printf(string(respBody))
+	//loggers.Info.Printf(string(respBody))
+	return resp.Status
 }

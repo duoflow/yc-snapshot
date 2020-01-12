@@ -35,6 +35,7 @@ func main() {
 	disk.Client.GetDiskInfo(ctx, vms[0].VMhddid)
 	// create snapshot tasks
 	snap := snapshot.New(&conf, vms)
+	snap.MakeSnapshot(ctx)
 	//
 	c := cron.New()
 	// "35 23 */2 * *"
