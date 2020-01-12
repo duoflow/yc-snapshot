@@ -255,6 +255,8 @@ func (snap Snapshot) MakeSnapshot(ctx context.Context) {
 								// if VM has started then nothing to do
 								if vmstartstate == "RUNNING" {
 									loggers.Info.Printf("MakeSnapshot(): VM with ID=%s has started successfully", vmi.VMid)
+									// define register data
+									registerstatusunit.VMstatus = vmstartstate
 								}
 								break
 							} else {
