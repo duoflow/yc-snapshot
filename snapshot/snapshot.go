@@ -18,11 +18,11 @@ import (
 
 // Status - status for Disk snapshot creation
 type Status struct {
-	VMname       string
-	DiskID       string
-	SnapshotID   string
-	SnapshotDate string
-	Status       string
+	VMname     string
+	DiskID     string
+	SnapshotID string
+	Status     string
+	VMstatus   string
 }
 
 var (
@@ -140,20 +140,22 @@ func (snap Snapshot) GetSnapStatusByID(ctx context.Context, snapshotid string) s
 }
 
 // GetSnapStatusByName - function for listing of partucular snapshot
-func (snap Snapshot) GetSnapStatusByName(ctx context.Context, snapshotname string) string {
+func (snap Snapshot) GetSnapStatusByName(ctx context.Context, snapshotname string) (status string, snapid string) {
 	loggers.Info.Printf("Snapshot GetSnapStatusByName() starts")
 	ctx, cancel := context.WithTimeout(ctx, 1000*time.Millisecond)
 	defer cancel()
 	// ---------
 	snapshotstatus := "ERROR"
+	snapshotid := "ERROR"
 	snaplist := snap.ListSnapshots(ctx)
 	for _, snapshot := range snaplist.SnapshotsArray {
 		if snapshotname == snapshot.Name {
 			snapshotstatus = snapshot.Status
+			snapshotid = snapshot.ID
 		}
 	}
 	//
-	return snapshotstatus
+	return snapshotstatus, snapshotid
 }
 
 // Create - function for create snapshot
@@ -192,26 +194,34 @@ func (snap Snapshot) Create(ctx context.Context, Diskid string, SnapName string,
 // MakeSnapshot - function for create snapshot
 func (snap Snapshot) MakeSnapshot(ctx context.Context) {
 	loggers.Info.Printf("MakeSnapshot() starts")
-	telegrambot.Tgbot.SendMessage("MakeSnapshot() starts")
 	ctx, cancel := context.WithTimeout(ctx, 1000*time.Millisecond)
 	defer cancel()
 	// ---------
-	for _, vm := range snap.vms {
-		go func(vmi config.VirtualMachine) {
+	for index, vm := range snap.vms {
+		go func(vmi config.VirtualMachine, i int) {
 			loggers.Info.Printf("MakeSnapshot(): Discovered VMs: VMid=%s", vmi.VMid)
+			// define register data
+			StatusRegister[i].VMname = vmi.VMname
+			StatusRegister[i].DiskID = vmi.VMhddid
 			// get vm status
 			vmstatus := snap.instance.Get(ctx, vmi.VMid)
 			// if VM status = RUNNING shutdown the VM
 			if vmstatus == "RUNNING" {
+				// define register data
+				StatusRegister[i].VMstatus = vmstatus
+				// stop target VM
 				vmstopstate := snap.StopVM(ctx, vmi.VMid)
 				loggers.Info.Printf("MakeSnapshot(): VM stop operation state = %s", vmstopstate)
 				//------
 				if vmstopstate == "STOPPED" {
+					// define register data
+					StatusRegister[i].VMstatus = vmstopstate
+					// define time
 					t := time.Now()
 					// snapshot description with timestamp
-					snapdesc := "autosnap" + "---" + t.Format("2006-01-02-150405")
+					snapdesc := "autosnap" + "-+-" + t.Format(time.RFC3339)
 					// snapshot name with timestamp
-					snapname := vmi.VMhddid + "---" + t.Format("2006-01-02-150405")
+					snapname := vmi.VMhddid + "-+-" + t.Format(time.RFC3339)
 					loggers.Info.Printf("MakeSnapshot(): Start creating snapshot for VM=%s, Disk=%s with snapshot id=%s", vmi.VMid, vmi.VMhddid, snapname)
 					// REST API Call to create snapshot
 					snapcreateflag := snap.Create(ctx, vmi.VMhddid, snapname, snapdesc)
@@ -225,34 +235,42 @@ func (snap Snapshot) MakeSnapshot(ctx context.Context) {
 							loggers.Info.Printf("MakeSnapshot(): Check snapshot status - start timeout. Time=%d", awaiting)
 							time.Sleep(3 * time.Minute)
 							loggers.Info.Printf("MakeSnapshot(): Check snapshot status - end timeout. Time=%d", awaiting)
-							snapstatus := snap.GetSnapStatusByName(ctx, snapname)
+							snapstatus, snapid := snap.GetSnapStatusByName(ctx, snapname)
 							if snapstatus == "READY" {
 								loggers.Info.Printf("MakeSnapshot(): Snapshot status: %s, Time=%d", snapstatus, awaiting)
+								// define register data
+								StatusRegister[i].SnapshotID = snapid
+								StatusRegister[i].Status = snapstatus
 								// if snapshot is ready then start VM
 								vmstartstate := snap.StartVM(ctx, vmi.VMid)
 								// if VM has started then nothing to do
-								if vmstartstate == 1 {
+								if vmstartstate == "RUNNING" {
 									loggers.Info.Printf("MakeSnapshot(): VM with ID=%s has started successfully", vmi.VMid)
 								}
-
 								break
 							} else {
 								loggers.Info.Printf("MakeSnapshot(): Snapshot status: %s, Time=%d", snapstatus, awaiting)
+								// define register data
+								StatusRegister[i].SnapshotID = snapid
+								StatusRegister[i].Status = snapstatus
 							}
 						}
 					} else {
 						loggers.Error.Printf("MakeSnapshot(): Error in Create Snapshot REST API Call: %s", snapcreateflag)
+						// define register data
+						StatusRegister[i].SnapshotID = "ERROR:CALL_API"
+						StatusRegister[i].Status = "ERROR:CALL_API"
 					}
 				}
 			} else {
 				loggers.Error.Printf("MakeSnapshot(): VM with VMid=%s is not in RUNNING state", vmi.VMid)
 				loggers.Error.Printf("MakeSnapshot(): SEND EMAIL NOTIFICATION HERE")
+				// define register data
+				StatusRegister[i].SnapshotID = "ERROR:VM_NOT_RUNNING"
+				StatusRegister[i].Status = "ERROR:VM_NOT_RUNNING"
 			}
-
-		}(vm)
+		}(vm, index)
 	}
-	// ---------
-	loggers.Info.Printf("MakeSnapshot() action")
 }
 
 // StopVM - function for create snapshot
@@ -278,7 +296,7 @@ func (snap Snapshot) StopVM(ctx context.Context, vmid string) string {
 }
 
 // StartVM - function for create snapshot
-func (snap Snapshot) StartVM(ctx context.Context, vmid string) int {
+func (snap Snapshot) StartVM(ctx context.Context, vmid string) string {
 	loggers.Info.Printf("Snapshot StartVM() starts")
 	ctx, cancel := context.WithTimeout(ctx, 1000*time.Millisecond)
 	defer cancel()
@@ -287,17 +305,17 @@ func (snap Snapshot) StartVM(ctx context.Context, vmid string) int {
 	loggers.Info.Printf("Snapshot StartVM() call f(): snap.instance.Start(ctx, vmid)")
 	// Check status of VM after sleep timer
 	loggers.Info.Printf("Snapshot StartVM() Start sleep timer")
-	time.Sleep(2 * time.Minute)
+	time.Sleep(3 * time.Minute)
 	loggers.Info.Printf("Snapshot StartVM() Check VM running status")
 	vmstatus := snap.instance.Get(ctx, vmid)
 	loggers.Info.Printf("Snapshot StartVM() VM status after shutdown = %s", vmstatus)
 	if vmstatus == "RUNNING" {
 		loggers.Info.Printf("Snapshot StartVM() VM with VMid=%s has started in sleep timer", vmid)
-		return 1
+		return "RUNNING"
 	}
 	// ----
 	loggers.Error.Printf("Snapshot StartVM() VM with VMid=%s hasn't started in sleep timer", vmid)
-	return 0
+	return "ERROR"
 }
 
 // CleanUpOldSnapshots - function for listing of partucular snapshot
