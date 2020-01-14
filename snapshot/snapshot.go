@@ -276,6 +276,7 @@ func (snap Snapshot) MakeSnapshot(ctx context.Context) {
 						// define register data
 						registerstatusunit.SnapshotID = "ERROR:CALL_API"
 						registerstatusunit.Status = "ERROR:CALL_API"
+						registerstatusunit.VMstatus = vmstartstate
 					}
 				}
 			} else {
@@ -284,6 +285,7 @@ func (snap Snapshot) MakeSnapshot(ctx context.Context) {
 				// define register data
 				registerstatusunit.SnapshotID = "ERROR:VM_NOT_RUNNING"
 				registerstatusunit.Status = "ERROR:VM_NOT_RUNNING"
+				registerstatusunit.VMstatus = vmstatus
 			}
 			// add registerstatusunit to register
 			StatusRegister = append(StatusRegister, registerstatusunit)
