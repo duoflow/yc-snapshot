@@ -32,7 +32,7 @@ func main() {
 	// "35 23 */2 * *"
 	c.AddFunc("*/50 * * * *", func() {
 		// get new IAM token
-		loggers.Info
+		loggers.Info.Printf("Start token update procedure")
 		token.GetIAMToken(&conf)
 		/**/
 	})
