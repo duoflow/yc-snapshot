@@ -27,8 +27,6 @@ func main() {
 	telegrambot.Init(conf.TelegramBotToken)
 	// start serving telegram chat
 	go telegrambot.Tgbot.Serve()
-	// get new IAM token
-	token.GetIAMToken(&conf)
 	// init disk client
 	disk.Init(&conf)
 	// create snapshot tasks
@@ -36,8 +34,16 @@ func main() {
 	// create crontab tasks
 	c := cron.New()
 	// "35 23 */2 * *"
-	c.AddFunc(conf.StartTime, func() { snap.MakeSnapshot(ctx) /**/ })
-	c.AddFunc(conf.CleanUpTime, func() { snap.CleanUpOldSnapshots(ctx) /**/ })
+	c.AddFunc(conf.StartTime, func() {
+		// get new IAM token
+		token.GetIAMToken(&conf)
+		snap.MakeSnapshot(ctx) /**/
+	})
+	c.AddFunc(conf.CleanUpTime, func() {
+		// get new IAM token
+		token.GetIAMToken(&conf)
+		snap.CleanUpOldSnapshots(ctx) /**/
+	})
 	c.Start()
 
 	// start listening for terminate signals
