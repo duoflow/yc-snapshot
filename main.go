@@ -30,18 +30,20 @@ func main() {
 	// init disk client
 	disk.Init(&conf)
 	// create snapshot tasks
-	snap := snapshot.New(&conf, vms)
+
 	// create crontab tasks
 	c := cron.New()
 	// "35 23 */2 * *"
 	c.AddFunc(conf.StartTime, func() {
 		// get new IAM token
 		token.GetIAMToken(&conf)
+		snap := snapshot.New(&conf, vms)
 		snap.MakeSnapshot(ctx) /**/
 	})
 	c.AddFunc(conf.CleanUpTime, func() {
 		// get new IAM token
 		token.GetIAMToken(&conf)
+		snap := snapshot.New(&conf, vms)
 		snap.CleanUpOldSnapshots(ctx) /**/
 	})
 	c.Start()

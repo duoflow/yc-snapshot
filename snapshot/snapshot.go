@@ -1,7 +1,6 @@
 package snapshot
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -17,7 +16,7 @@ import (
 	"github.com/duoflow/yc-snapshot/instance"
 	"github.com/duoflow/yc-snapshot/loggers"
 	"github.com/duoflow/yc-snapshot/telegrambot"
-	"github.com/olekukonko/tablewriter"
+	//"github.com/olekukonko/tablewriter"
 )
 
 // Status - status for Disk snapshot creation
@@ -361,6 +360,7 @@ func (snap Snapshot) CleanUpOldSnapshots(ctx context.Context) {
 	}
 }
 
+/*
 // PrintStatusRegister - to get status information about snapshots
 func (snap Snapshot) PrintStatusRegister() {
 	data := [][]string{
@@ -380,3 +380,4 @@ func (snap Snapshot) PrintStatusRegister() {
 	table.Render() // Send output
 	loggers.Info.Println(buf.String())
 }
+/**/
