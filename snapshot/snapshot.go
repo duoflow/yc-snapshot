@@ -227,7 +227,7 @@ func (snap Snapshot) MakeSnapshot(ctx context.Context) {
 					diskinfo := disk.Client.GetDiskInfo(ctx, vmi.VMhddid)
 					// snapshot description with timestamp
 					date := strings.ToLower(strings.ReplaceAll(t.Format("2006-01-02T15:04:05"), ":", "-"))
-					snapdesc := "autosnap" + "-size-" + diskinfo.Size + "-date-" + date
+					snapdesc := vmi.VMname + "-size-" + diskinfo.Size + "-date-" + date
 					// snapshot name with timestamp
 					snapname := vmi.VMhddid + "-size-" + diskinfo.Size + "-date-" + date
 					loggers.Info.Printf("MakeSnapshot(): Start creating snapshot for VM=%s, Disk=%s with snapshot id=%s", vmi.VMid, vmi.VMhddid, snapname)
