@@ -238,7 +238,7 @@ func (snap Snapshot) MakeSnapshot(ctx context.Context) {
 						// start cycle to check stapshot status
 						awaiting := 0
 						timeinterval := 10
-						for i := 0; i < 12; i++ {
+						for i := 0; i < 25; i++ {
 							awaiting += timeinterval
 							loggers.Info.Printf("MakeSnapshot(): Check snapshot status - start timeout. Time=%d", awaiting)
 							time.Sleep(10 * time.Minute)
